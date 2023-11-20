@@ -1,0 +1,8 @@
+django #==3.1.16
+django-environ==0.9.0 #para crear variables de entorno para proteccion de datos
+django-cors-headers==3.13.0 #para permitir comunicacion entre el frontend y backend y dar permisos para el API
+djangorestframework==3.14.0 #para crear APIS
+Pillow==9.3.0 #para trabajar con imagenes
+django-storages==1.13.1 #para guardar las imagenes en AWS par que el sistio no se lagee
+django-ckeditor==6.3.2 #para crear contenido de manera mas rika para formatos
+psycopg2==2.9.5 #para trabajar con la postgresql
