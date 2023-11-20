@@ -1,4 +1,11 @@
 from pathlib import Path
+import os
+import environ
+
+##Definir variables para environ
+# PAra proteger cosas importantes
+env = environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,17 +15,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-_-yyhqi4z)j3dy&#q!ie(e@sy#w6b)9sh2*8jawt&yu29h_%iv"
+## Forma insegura: SECRET_KEY = "django-insecure-_-yyhqi4z)j3dy&#q!ie(e@sy#w6b)9sh2*8jawt&yu29h_%iv"
+SECRET_KEY = os.environ.get("SECRET_KEY")  ## NECESARIO PROTEGER
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+DEBUG = os.environ.get("DEBUG")  ## NECESARIO PROTEGER
+## Que dominios tendran permiso para acceder a nuestras rutas
+## antes: ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS_DEV")
 
 # Application definition
 
-INSTALLED_APPS = [
+##apps preinstaladas de Django
+DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -26,8 +35,46 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
+##apps del proyecto
+PROJECT_APPS = []
+##apps instaladas por pip
+THIRD_PARTY_APPS = [
+    "corsheaders",  # para hacer el llamado del API correctamente
+    "rest_framework",  # rest d dajngo
+    "ckeditor",  # permite hacer texto mas completo
+    "ckeditor_uploader",
+]
+
+INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
+
+## CKEditor
+CKEDITOR_CONFIGS = {
+    "default": {
+        "toolbar": "Custom",
+        "toolbar_Custom": [
+            ["Bold", "Italic", "Underline"],
+            [
+                "NumberedList",
+                "BulletedList",
+                "-",
+                "Outdent",
+                "Indent",
+                "-",
+                "JustifyLeft",
+                "JustifyCenter",
+                "JustifyRight",
+                "JustifyBlock",
+            ],
+            ["Link", "Unlink"],
+            ["RemoveFormat", "Source"],
+        ],
+        "autoParagraph": False,
+    }
+}
+CKEDITOR_UPLOAD_PATH = "/media/"
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  ##Agregamos corsheaders
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -91,21 +138,44 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
-
-TIME_ZONE = "UTC"
-
+LANGUAGE_CODE = "es"
+TIME_ZONE = "UTC-5"
 USE_I18N = True
-
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_URL = "/static/"
 
-STATIC_URL = "static/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
+
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "build/static")]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+##agregado
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly"
+    ],
+}
+##agregado
+CORS_ORIGIN_WHITELIST = env.list("CORS_ORIGIN_WHITELIST_DEV")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS_DEV")
+##agregado
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+##agregado
+if not DEBUG:
+    ALLOWED_HOSTS = env.list("ALLOWED_HOSTS_DEPLOY")
+    CORS_ORIGIN_WHITELIST = env.list("CORS_ORIGIN_WHITELIST_DEPLOY")
+    CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS_DEPLOY")
+
+    DATABASES = {
+        "default": env.db("DATABASE_URL"),
+    }
+    DATABASES["default"]["ATOMIC_REQUESTS"] = True
